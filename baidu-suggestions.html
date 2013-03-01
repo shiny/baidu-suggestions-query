@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>百度联想词批量查询_熊猫创意</title>
+		<script src="http://lib.sinaapp.com/js/jquery/1.8.3/jquery.min.js"></script>
+		<style>
+		.results{float:right; width:600px;}
+		.form{float:left; margin-left:20px;}
+		body{font-size:12px; line-height:1.8; font-family:Arial;}
+			.copyright{font-size:12px; color:#999; margin-top:20px;}
+		</style>
+    </head>
+    <body>
+		<div class="form">
+			<h1>百度联想词批量查询</h1>
+			<textarea id="words" style="margin: 2px; width: 487px; height: 191px;"></textarea>
+			<div>「可选」关键词后添加<input placeholder="的" size="5" name="append"></div>
+			<div>「可选」删除未出现以下联想词的关键词：<input name="filter">(用逗号「,」分隔)</div>
+			<div><button class="query">查询</button></div>
+			<div class="copyright">&copy; 熊猫创意出品 pandaidea.com</div>
+		</div>
+		<div class="results" id="results">
+			<div><b>联想词</b> <button class="toggleWords">合起</button></div>
+			<ul>
+			</ul>
+		</div>
+    </body>
+	<script>
+	(function($){
+		$('.toggleWords').click(function(){
+			var txt = $(this).text();
+			if(txt=='合起'){ txt = '展开';} else { txt = '合起';}
+			$(this).text(txt);
+			$('.results ul ul').toggle()
+		});
+		$('.query').click(function(){
+			//清空
+			$('#results > ul').empty();
+			
+			var words = $('#words').val().split('\n');
+			var filter = $("input[name=filter]").val();
+			var append = $('input[name=append]').val();
+			filter = filter.replace(/，/g,',');
+			if(filter.indexOf(',')>-1){
+				filter = filter.split(',');
+			} else {
+				filter = [filter];
+			}
+			// 查询百度
+			var fetchBaiduSuggest = function(word,cb){
+				$.getJSON("http://suggestion.baidu.com/su?wd="+encodeURIComponent(word+append)+"&cb=?",function(data){
+					if($.isArray(data.s)){
+						cb(word,data.s);
+					}
+				});
+			}
+			//添加到查询结果
+			var appendToResults = function(word,words){
+				if(!words || words.length==0){
+					return;
+				}
+				if(filter.length>0){ //过滤关键词
+					var find = 0;
+					for(var i=0;i<filter.length;i++){
+						for(var j=0;j<words.length;j++){
+							if(words[j].indexOf(filter[i])>-1){
+								find++;
+							}
+						}
+					}
+					if(find==0){
+						return;
+					}
+				}
+				//显示结果
+				var wordList = words.join('</li><li>');
+				$('.results > ul').append('<li>'+word+'<ul><li>'+wordList+'</li></ul></li>');
+			}
+			//遍历查询
+			for(var i=0;i<words.length;i++){
+				fetchBaiduSuggest(words[i],appendToResults);
+			}
+		});
+	})(jQuery);
+	</script>
+</html>
